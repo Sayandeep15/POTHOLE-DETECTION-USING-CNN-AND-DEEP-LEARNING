@@ -1,0 +1,170 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from tqdm.notebook import tqdm as tq
+import cv2
+import random as rn
+import os
+import tensorflow as tf
+from tensorflow import keras
+from sklearn.preprocessing import LabelEncoder as le
+from tensorflow.keras.utils import to_categorical
+from sklearn.model_selection import train_test_split
+
+from matplotlib import style
+# %matplotlib inline
+style.use('fivethirtyeight')
+sns.set(style='whitegrid' ,color_codes=True)
+
+#Avoid OOM error by setting GPU Memory Consumption Growth
+
+gpus=tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+  tf.config.experimental.set_memory_growth(gpu, True)
+tf.config.list_physical_devices('GPU')
+
+"""Importing data """
+
+def make_train_data(label,DIR):
+    for img in tq(os.listdir(DIR)):
+        try:
+            path = os.path.join(DIR,img)
+            img = cv2.imread(path,cv2.IMREAD_COLOR)
+            img = cv2.resize(img, (IMG_SIZE,IMG_SIZE))
+            X.append(np.array(img))
+            Z.append(str(label))
+        except:
+            pass
+        
+def assign_label(img,label):
+    return label
+
+X=[] #contains images as a array
+Z=[] #contains the labels
+IMG_SIZE=100
+
+
+nor='/content/drive/MyDrive/data set/normal'
+pot='/content/drive/MyDrive/data set/potholes'
+
+make_train_data('NORMAL',nor)
+make_train_data('POTHOLES',pot)
+
+"""Ploting images"""
+
+fig,ax=plt.subplots(2,5)
+plt.subplots_adjust(bottom=0.3, top=0.7, hspace=0)
+fig.set_size_inches(15,15)
+
+for i in range(2):
+    for j in range (5):
+        l=rn.randint(0,len(Z))
+        ax[i,j].imshow(X[l][:,:,::-1])
+        ax[i,j].set_title(Z[l])
+        ax[i,j].set_aspect('equal')
+
+"""Encoding the data"""
+
+from sklearn.preprocessing import LabelEncoder
+
+le=LabelEncoder()
+Y=[] # binary representation of labels
+Y=le.fit_transform(Z)
+Y=to_categorical(Y,2)
+
+X=np.array(X)
+X=X/255.0
+
+print("Shape of X:", X.shape)
+print("Shape of Y:", Y.shape)
+
+"""Spliting and training the data"""
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, Y_train, Y_test= train_test_split(X,Y, test_size=0.2)
+
+"""Importing CNN model"""
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
+import time
+
+NAME= f'prediction-{int(time.time())}'
+
+"""Creating CNN layers"""
+
+model= Sequential()
+
+model.add(Conv2D(64, (3,3), activation='relu', input_shape=(100,100,3)))
+model.add(MaxPooling2D((2,2)))
+
+model.add(Conv2D(64, (3,3), activation='relu'))
+model.add(MaxPooling2D((2,2)))
+
+model.add(Flatten())
+model.add(Dense(256, activation='relu'))
+model.add(Dense(2, activation='sigmoid'))
+#model.add(Dense(2, activation='softmax'))
+
+"""Model compile"""
+
+#model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+model.summary ()
+
+logdir='logs'
+
+tensorboard_callback= tf.keras.callbacks.TensorBoard(log_dir=logdir)
+
+"""Model implimenting"""
+
+history=model.fit(X_train, Y_train, epochs= 10, validation_split=0.1, batch_size=32,callbacks=[tensorboard_callback] )
+
+"""Calculating accuracy and loss"""
+
+loss,accuracy= model.evaluate(X_test, Y_test)
+print('Test accuracy: {:2.2f}%'.format(accuracy*100))
+print('Test loss {:2.2f}%'.format(loss*100))
+
+history.history.keys()
+
+"""Plotting the graphs"""
+
+plt.style.use('bmh')
+fig=plt.figure()
+plt.plot(history.history['loss'],color='teal', label='loss')
+plt.plot(history.history['val_loss'], color='orange', label='val_loss')
+plt.title('MODEL LOSS')
+plt.xlabel('EPOCHS')
+plt.ylabel('LOSS')
+plt.legend(loc='upper left')
+plt.show()
+
+plt.style.use('bmh')
+
+fig=plt.figure()
+plt.plot(history.history['accuracy'],color='teal', label='accuracy')
+plt.plot(history.history['val_accuracy'], color='orange', label='val_accuracy')
+plt.title('MODEL ACCURACY')
+plt.xlabel('EPOCHS')
+plt.ylabel('ACCURACY')
+plt.legend(loc='upper left')
+plt.show()
+
+"""Predicting the model"""
+
+import random
+indx2= random.randint(0, len(Y_test))
+plt.imshow(X_test[indx2, :])
+plt.show()
+
+Y_pred= np.round(model.predict(X_test[indx2, :].reshape(1,100,100,3)))
+print(Y_pred)
+if Y_pred[0][0] == 1:
+  print("Plain Road")
+else:
+    print("Pothole Road")
+
+"""END"""
