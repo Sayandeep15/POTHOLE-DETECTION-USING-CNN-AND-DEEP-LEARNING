@@ -163,8 +163,18 @@ plt.show()
 Y_pred= np.round(model.predict(X_test[indx2, :].reshape(1,100,100,3)))
 print(Y_pred)
 if Y_pred[0][0] == 1:
-  print("Plain Road")
+  print("It is a Plain Road")
+  op= "Plain Road"
 else:
-    print("Pothole Road")
+    print(" It is a Pothole Road")
+    
+<h2>"""Audio output"""</h2>
+pip install gTTS
+from gtts import gTTS     #gtts= lib, gTTS= class, so from lib import cls
+speech=op
+gtts_obj= gTTS(text=speech, lang="en", slow=False)
+gtts_obj.save("/content/output.wav")
+from IPython.display import Audio
+Audio("/content/output.wav")
 
 """END"""
