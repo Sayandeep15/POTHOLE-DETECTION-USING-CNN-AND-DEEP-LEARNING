@@ -168,7 +168,7 @@ if Y_pred[0][0] == 1:
 else:
     print(" It is a Pothole Road")
     
-<h2>"""Audio output"""</h2>
+"""Audio output"""
 pip install gTTS
 from gtts import gTTS     #gtts= lib, gTTS= class, so from lib import cls
 speech=op
