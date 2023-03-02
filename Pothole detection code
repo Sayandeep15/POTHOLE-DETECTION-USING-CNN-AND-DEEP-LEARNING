@@ -167,14 +167,5 @@ if Y_pred[0][0] == 1:
   op= "Plain Road"
 else:
     print(" It is a Pothole Road")
-    
-"""Audio output"""
-pip install gTTS
-from gtts import gTTS     #gtts= lib, gTTS= class, so from lib import cls
-speech=op
-gtts_obj= gTTS(text=speech, lang="en", slow=False)
-gtts_obj.save("/content/output.wav")
-from IPython.display import Audio
-Audio("/content/output.wav")
-
+      
 """END"""
