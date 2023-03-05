@@ -167,6 +167,7 @@ if Y_pred[0][0] == 1:
   op= "Plain Road"
 else:
     print(" It is a Pothole Road")
+    op= "Pothole Road"
     
 """Audio output"""
 pip install gTTS
